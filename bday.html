@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday Charitha! 🎉</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff4d6d;
+            --secondary: #ff758f;
+            --bg-gradient: linear-gradient(-45deg, #ff9a9e, #fad0c4, #a1c4fd, #c2e9fb);
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: var(--bg-gradient);
+            background-size: 400% 400%;
+            animation: gradientBG 10s ease infinite;
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 1. SLIDING WRAPPER - This handles the Left/Right move */
+        #slideWrapper {
+            transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: relative;
+            z-index: 10;
+            will-change: transform;
+        }
+
+        .card {
+            width: 300px;
+            height: 420px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        /* STEP STATES */
+        .card.is-open { transform: rotateY(-160deg); }
+        
+        .front, .back {
+            position: absolute;
+            width: 100%; height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 20px;
+            padding: 25px;
+            box-sizing: border-box;
+            text-align: center;
+            background: white;
+        }
+
+        .back { transform: rotateY(180deg); background: #fffafa; overflow: hidden; }
+
+        /* FRONT ELEMENTS */
+        .flame {
+            width: 15px; height: 25px; background: #ff9d00;
+            border-radius: 50% 50% 20% 20%;
+            position: absolute; top: -20px; left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 15px #ff9d00;
+            animation: flicker 0.1s infinite alternate;
+        }
+        @keyframes flicker { from { opacity: 0.8; } to { opacity: 1; transform: translateX(-50%) scale(1.1); } }
+        .is-blown { display: none; }
+
+        /* SECRET REVEAL */
+        .secret-panel {
+            position: absolute;
+            top: 100%; left: 0;
+            width: 100%; height: 100%;
+            background: var(--primary);
+            color: white;
+            transition: 0.6s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 5;
+        }
+        .secret-panel.active { top: 0; }
+
+        .instruction {
+            margin-top: 15px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 50% { opacity: 0.3; } }
+
+        /* FLOATING BACKGROUND DECOR */
+        .bg-icon {
+            position: absolute;
+            bottom: -100px;
+            animation: floatUp 7s linear infinite;
+            z-index: 1;
+            opacity: 0.5;
+        }
+        @keyframes floatUp { 100% { transform: translateY(-120vh) rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <!-- This wrapper moves left and right -->
+    <div id="slideWrapper">
+        <div class="card" id="birthdayCard" onclick="handleInteraction()">
+            <!-- Front Face -->
+            <div class="front">
+                <h1 style="font-family: 'Pacifico'; color: var(--primary); margin: 0;">Happy Birthday,<br>Charitha!</h1>
+                <div style="position: relative; font-size: 70px; margin: 30px;">
+                    <div class="flame" id="candleFlame"></div>
+                    🎂
+                </div>
+                <p id="hintLabel">Step 1: Blow the candle!</p>
+                <div class="instruction">CLICK TO START 👆</div>
+            </div>
+
+            <!-- Back Face -->
+            <div class="back">
+                <h2 style="font-family: 'Pacifico'; color: var(--primary);">To Charitha,</h2>
+                <p>Wishing you a year as moving and exciting as this card!</p>
+                <div style="font-size: 50px; margin: 10px;">🎁</div>
+                <p style="font-size: 0.8rem; color: #888;">One last surprise hidden here...</p>
+                <div class="instruction">TAP THE GIFT</div>
+
+                <!-- Final Secret Panel -->
+                <div class="secret-panel" id="secretMsg">
+                    <h2 style="font-family: 'Pacifico';">You're the Best! ✨</h2>
+                    <p>May all your dreams take flight today.</p>
+                    <div style="font-size: 40px;">💖🎉🎂</div>
+                    <button onclick="window.location.reload()" style="margin-top:20px; padding:8px 20px; border:none; border-radius:20px; background:white; color:var(--primary); font-weight:bold; cursor:pointer;">Restart</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <script>
+        let step = 1;
+        let side = "center"; // Tracks where the card is
+
+        function moveLeftRight() {
+            const wrapper = document.getElementById('slideWrapper');
+            
+            // Logic to toggle between Left, Right, and Center
+            if (side === "center" || side === "right") {
+                wrapper.style.transform = "translateX(-100px) rotate(-5deg)";
+                side = "left";
+            } else {
+                wrapper.style.transform = "translateX(100px) rotate(5deg)";
+                side = "right";
+            }
+        }
+
+        function handleInteraction() {
+            // MOVE THE CARD LEFT OR RIGHT ON EVERY CLICK
+            moveLeftRight();
+
+            const card = document.getElementById('birthdayCard');
+            const flame = document.getElementById('candleFlame');
+            const hint = document.getElementById('hintLabel');
+            const secret = document.getElementById('secretMsg');
+
+            if (step === 1) {
+                // Step 1: Blow Candle
+                flame.classList.add('is-blown');
+                confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
+                hint.innerText = "Step 2: Open your gift!";
+                step = 2;
+            } 
+            else if (step === 2) {
+                // Step 2: Open Card
+                card.classList.add('is-open');
+                setTimeout(() => {
+                    confetti({
+                        particleCount: 100,
+                        spread: 90,
+                        origin: { y: 0.6 },
+                        colors: ['#ff4d6d', '#ffffff', '#ff758f']
+                    });
+                }, 400);
+                step = 3;
+            }
+            else if (step === 3) {
+                // Step 3: Secret Reveal
+                secret.classList.add('active');
+                // Grand Finale Confetti
+                var duration = 3 * 1000;
+                var end = Date.now() + duration;
+                (function frame() {
+                    confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ff4d6d'] });
+                    confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#a1c4fd'] });
+                    if (Date.now() < end) requestAnimationFrame(frame);
+                }());
+                step = 4;
+            }
+        }
+
+        // Decor Logic
+        function createFloatingDecor() {
+            const icons = ['🎈', '✨', '💖', '⭐', '🌸', '🍭'];
+            setInterval(() => {
+                const el = document.createElement('div');
+                el.className = 'bg-icon';
+                el.innerText = icons[Math.floor(Math.random() * icons.length)];
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.fontSize = (Math.random() * 20 + 20) + 'px';
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 7000);
+            }, 600);
+        }
+
+        window.onload = createFloatingDecor;
+    </script>
+</body>
+</html>
